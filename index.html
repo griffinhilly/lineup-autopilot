@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lineup Autopilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Phone-first sports app. Dark-first: night arena floor, court-orange accent, team colors carry the color. */
+:root {
+  --bg: #0c0e12; --surface: #151920; --ink: #f3f4f6; --muted: #8d95a3; --line: #262c36;
+  --accent: #ff6a1f; --accent-ink: #160a02; --hero1: #ff6a1f; --hero2: #b3122e;
+  --start: #22c55e; --start-ink: #06210f; --clash: #f5b83d; --clash-bg: #2f2410;
+  --cap: #c084fc; --out: #ff5d5d; --ok: #22c55e;
+  --pos-g: #3b82f6; --pos-f: #22b45a; --pos-c: #a855f7; --pos-x: #ff6a1f; --pos-ink: #ffffff;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root {
+  --bg: #f2f3f5; --surface: #ffffff; --ink: #14161a; --muted: #5f6672; --line: #dde0e6;
+  --accent: #e2530b; --accent-ink: #ffffff;
+  --start: #15803d; --start-ink: #ffffff; --clash: #9a6200; --clash-bg: #fdf0d5;
+  --cap: #7e22ce; --out: #c81e1e; --ok: #15803d;
+  --pos-g: #2563eb; --pos-f: #15803d; --pos-c: #7e22ce; --pos-x: #e2530b; color-scheme: light } }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--f-body); }
+[hidden] { display: none !important; }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 0 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 16px; }
+.hero { margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: calc(18px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-left, 0px)) 16px;
+  background: linear-gradient(120deg, var(--hero1), var(--hero2)); color: #fff; display: grid; gap: 4px; }
+.hero .kicker { font: 700 12px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.hero h1 { font-size: 34px; text-transform: uppercase; }
+.hero .sub { font: 600 15px/1.3 var(--f-body); opacity: .95; }
+h1, h2, h3 { font-family: var(--f-display); letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h2 { font-size: 22px; } h3 { font-size: 18px; }
+p { margin: 0; }
+.note { font-size: 13px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.banner { border-radius: 8px; padding: 10px 12px; font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.banner.warn { background: var(--clash-bg); color: var(--clash); border: 1px solid var(--clash); }
+input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; }
+label { font-size: 13px; font-weight: 600; color: var(--muted); display: grid; gap: 4px; }
+select, button { font: inherit; color: var(--ink); }
+select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; max-width: 100%; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { background: var(--surface); border: 0; padding: 7px 12px; cursor: pointer; font-weight: 600; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button:focus-visible, select:focus-visible, input:focus-visible, td.tap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.quick { background: var(--surface); border: 1.5px solid var(--accent); color: var(--accent); border-radius: 20px; padding: 8px 16px; font: 700 15px/1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+.send { background: var(--accent); border: 1.5px solid var(--accent); color: var(--accent-ink); border-radius: 20px; padding: 8px 16px; font: 700 15px/1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+.send:disabled, .quick:disabled { opacity: .45; cursor: default; }
+.plain { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-weight: 600; }
+.linkbtn { background: none; border: 0; color: var(--accent); font-weight: 600; cursor: pointer; padding: 0; }
+.state { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
+.state.edited { color: var(--clash); border-color: var(--clash); }
+.state.on { color: var(--ok); border-color: var(--ok); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .spinner { animation: spin 0.9s linear infinite; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Lineup */
+.days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.days button { flex: 0 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; text-align: center; line-height: 1.1; }
+.days button b { display: block; font: 700 18px/1 var(--f-display); }
+.days button small { color: var(--muted); font-size: 11px; }
+.days button.past { opacity: .55; }
+.days button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); opacity: 1; }
+.days button[aria-pressed="true"] small { color: var(--accent-ink); }
+.statpick { display: flex; gap: 6px; flex-wrap: wrap; }
+.statpick button { background: none; border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.statpick button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+.roster { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.rhead, .prow { display: grid; grid-template-columns: 50px minmax(0, 1fr) 64px; gap: 8px; align-items: center; padding: 0 10px; }
+.prow { grid-template-columns: 50px 44px minmax(0, 1fr) 64px; min-height: 56px; border-bottom: 1px solid var(--line); cursor: pointer; padding-block: 6px; }
+.prow:last-child { border-bottom: 0; }
+.prow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rhead { font: 600 12px/1 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-block: 10px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.pill { display: grid; place-items: center; height: 30px; border-radius: 15px; border: 1.5px solid var(--accent); color: var(--accent); font: 700 15px/1 var(--f-display); letter-spacing: .03em; position: relative; }
+.pill.be { border-color: var(--line); color: var(--muted); }
+.pill.pos { color: var(--pos-ink); border-color: transparent; }
+.pill.pos-g { background: var(--pos-g); } .pill.pos-f { background: var(--pos-f); } .pill.pos-c { background: var(--pos-c); } .pill.pos-x { background: var(--pos-x); }
+.pill.pinned::after { content: ""; position: absolute; top: -3px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); }
+.av { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: grid; place-items: end center; border: 2px solid var(--line); }
+.av img { width: 100%; height: auto; display: block; }
+.av span { font: 700 14px/44px var(--f-display); color: #fff; width: 100%; text-align: center; }
+.team { display: inline-block; font: 700 11px/1 var(--f-body); padding: 2px 5px; border-radius: 3px; letter-spacing: .04em; margin-right: 4px; }
+.pname { min-width: 0; }
+.pname b { display: block; font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pname > span { font-size: 13px; color: var(--muted); }
+.pname em { font-style: normal; font-size: 12px; font-weight: 600; }
+.pname em.out { color: var(--out); } .pname em.gtd { color: var(--clash); } .pname em.why { color: var(--muted); font-weight: 500; }
+.rk { font: 600 11px/1 var(--f-body); color: var(--muted); margin-left: 4px; }
+.stats { display: flex; gap: 2px 12px; margin-top: 2px; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink); }
+.stats i { font-style: normal; color: var(--muted); font-size: 10px; margin-left: 2px; letter-spacing: .03em; }
+.game { font-size: 13px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.game span { color: var(--muted); }
+.prow.emptyslot b { color: var(--muted); font-weight: 500; }
+.prow.sel { background: var(--clash-bg); }
+.prow.dest .pill { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.prow.dim { opacity: .45; }
+.prow.locked { cursor: default; }
+.benchhead.dest { cursor: pointer; color: var(--accent-ink); background: var(--accent); }
+.readonly .prow { cursor: default; }
+.sendbar { position: sticky; bottom: env(safe-area-inset-bottom, 0px); z-index: 5; display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px; box-shadow: 0 -2px 12px rgb(0 0 0 / .18); font-size: 14px; }
+.sendsheet { background: var(--surface); border: 1.5px solid var(--accent); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.sendsheet ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 14px; }
+.result.ok { color: var(--ok); } .result.bad { color: var(--out); }
+/* Week + priority */
+.score { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.score > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.score b { display: block; font: 700 26px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.score span { font-size: 12px; color: var(--muted); }
+.calls { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.calls li { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--clash); border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+.calls li.capcall { border-left-color: var(--cap); }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 4px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 600 12px/1.15 var(--f-body); color: var(--muted); }
+th.day b { display: block; font: 700 15px/1 var(--f-display); color: var(--ink); }
+th.past, td.past { opacity: .55; }
+td.name, th.name { text-align: left; position: sticky; left: 0; background: var(--surface); padding-left: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+td.name small { color: var(--muted); }
+td.tap { cursor: pointer; }
+.chip { display: inline-block; min-width: 30px; padding: 2px 4px; border-radius: 4px; font: 600 12px/1.3 var(--f-body); position: relative; }
+.c-start { background: var(--start); color: var(--start-ink); }
+.c-clash { background: var(--clash-bg); color: var(--clash); border: 1px solid var(--clash); }
+.c-cap { color: var(--cap); border: 1px dashed var(--cap); }
+.c-out { color: var(--out); font-weight: 700; }
+.c-none { color: var(--line); }
+.chip.pinned::after { content: ""; position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid var(--surface); }
+tr.total td { font-weight: 600; border-bottom: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); align-items: center; }
+.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rank li { display: grid; grid-template-columns: 28px 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.rank li.dragging { border-color: var(--accent); box-shadow: 0 4px 14px rgb(0 0 0 / .25); }
+.rank li.ir { opacity: .6; grid-template-columns: 30px minmax(0, 1fr) auto; }
+.handle { touch-action: none; cursor: grab; border: 0; background: none; font-size: 18px; color: var(--muted); padding: 4px; line-height: 1; }
+.num { font: 700 18px/1 var(--f-display); text-align: right; font-variant-numeric: tabular-nums; }
+.who { min-width: 0; } .who b { font-weight: 600; }
+.who div { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.updown { display: flex; gap: 2px; }
+.updown button { border: 1px solid var(--line); background: var(--bg); border-radius: 4px; width: 30px; height: 28px; cursor: pointer; }
+.tag { font-size: 11px; font-weight: 600; padding: 0 4px; border-radius: 3px; border: 1px solid currentColor; }
+.tag.out { color: var(--out); } .tag.gtd { color: var(--clash); }
+.footer { display: grid; gap: 6px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <span class="kicker">Lineup Autopilot · Adam Silver Fan Club</span>
+    <h1 id="heroTeam">Lineup Autopilot</h1>
+    <span class="sub" id="heroSub">Your Fantrax lineup, set in one tap.</span>
+  </header>
+
+  <p id="fatal" class="banner warn" hidden></p>
+
+  <!-- Signed out: sign in with Fantrax -->
+  <section id="signin" class="card" hidden>
+    <h2>Sign in with your Fantrax login</h2>
+    <p>Lineup Autopilot sets your Fantrax lineup for you. It signs in to Fantrax as you, once, and keeps only that session, the same way Fantrax's own "remember me" does. Your password is encrypted on this phone and never stored.</p>
+    <form id="signinForm" class="card" style="padding:0;border:0;background:none">
+      <label for="fxEmail">Fantrax email<input id="fxEmail" type="email" autocomplete="username" required></label>
+      <label for="fxPassword">Fantrax password<input id="fxPassword" type="password" autocomplete="current-password" required></label>
+      <div class="actions"><button class="send" id="signinBtn" type="submit">Sign in</button></div>
+      <p class="note" id="signinMsg" role="status"></p>
+    </form>
+    <p class="note">It can only change your own lineup: who starts and who sits. It never adds, drops or trades players.</p>
+  </section>
+
+  <section id="connecting" class="card" hidden>
+    <div class="actions"><span class="spinner" aria-hidden="true"></span><h2>Signing in to Fantrax…</h2></div>
+    <p>This takes about a minute the first time. Keep this page open.</p>
+  </section>
+
+  <!-- First sign-in: autopilot choice -->
+  <section id="choose" class="card" hidden>
+    <h2>Turn on autopilot?</h2>
+    <p>With autopilot on, every morning around 11 am ET we send your Quick Lineup to Fantrax, unless you've already pressed Send that day. You can change this any time.</p>
+    <div class="actions">
+      <button class="send" id="apOn">Autopilot on</button>
+      <button class="quick" id="apOff">Off, I'll press Send</button>
+    </div>
+  </section>
+
+  <!-- Signed in -->
+  <div id="app" hidden style="display:grid; gap:16px">
+    <div class="banner warn" id="reconnect" hidden><span>Fantrax signed you out. Sign in again so Send and autopilot keep working.</span><button class="send" id="reconnectBtn">Sign in</button></div>
+
+    <div class="controls">
+      <select id="period" aria-label="Week"></select>
+      <div class="seg" role="group" aria-label="View">
+        <button id="v-day" aria-pressed="true">Lineup</button>
+        <button id="v-week" aria-pressed="false">Week</button>
+        <button id="v-rank" aria-pressed="false">Priority</button>
+      </div>
+    </div>
+
+    <section id="day" style="display:grid; gap:10px">
+      <div class="days" id="dayStrip" role="group" aria-label="Day"></div>
+      <div class="actions">
+        <button class="quick" id="quick">Quick Lineup</button>
+        <span class="state" id="dayState"></span>
+      </div>
+      <div class="statpick" id="statPick" role="group" aria-label="Stats shown (season per game)"></div>
+      <p class="note" id="moveHint">Tap a player, then tap HERE to move them.</p>
+      <div class="roster" id="rosterBox">
+        <div class="rhead"><span>Slot</span><span>Starters</span><span>Game</span></div>
+        <div id="starters"></div>
+        <div class="rhead benchhead" id="benchHead"><span></span><span>Bench</span><span></span></div>
+        <div id="bench"></div>
+      </div>
+      <div class="sendbar" id="sendbar">
+        <span id="sendSummary"></span>
+        <button class="send" id="openSend">Review &amp; send</button>
+      </div>
+      <div class="sendsheet" id="sendSheet" hidden>
+        <h2 id="sendTitle"></h2>
+        <ul id="moveList"></ul>
+        <div class="actions">
+          <button class="send" id="sendDay"></button>
+          <button class="quick" id="sendWeek"></button>
+          <button class="plain" id="closeSend">Close</button>
+        </div>
+        <p class="note result" id="sendResult" role="status"></p>
+      </div>
+    </section>
+
+    <section id="week" hidden style="display:grid; gap:12px">
+      <div class="score" id="score"></div>
+      <div style="display:grid; gap:6px"><h2>Calls to make</h2><ul class="calls" id="calls"></ul></div>
+      <div class="legend">
+        <span><span class="chip c-start">PG</span> starts in that slot</span>
+        <span><span class="chip c-clash">sit</span> game, no open slot</span>
+        <span><span class="chip c-cap">cap</span> over the weekly cap</span>
+        <span><span class="chip c-out">out</span> injured</span>
+        <span><span class="chip c-start pinned">F</span> your override</span>
+      </div>
+      <p class="note">Tap a game to override: auto → always start → always sit → auto. Faded days are already played.</p>
+      <div class="scroll"><table id="grid"></table></div>
+    </section>
+
+    <section id="rank" hidden style="display:grid; gap:10px">
+      <div class="controls" style="justify-content:space-between"><h2>Your priority order</h2><button class="plain" id="reset">Reset to default</button></div>
+      <p class="note">Drag the handle or use the arrows. Higher players start first and get the weekly cap first. The default order ranks this season's per-game stats across all nine categories, the same way for every team.</p>
+      <ol class="rank" id="ranklist"></ol>
+      <ol class="rank" id="irlist"></ol>
+    </section>
+
+    <div class="footer">
+      <div class="actions"><span>Autopilot</span><span class="state" id="apState"></span><button class="linkbtn" id="apToggle"></button></div>
+      <div id="recent"></div>
+      <div class="actions"><span id="who"></span><button class="linkbtn" id="signout">Sign out</button></div>
+      <span id="dataAge"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="solver.js"></script>
+<script src="plan.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
