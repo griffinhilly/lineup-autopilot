@@ -1,7 +1,7 @@
 // config.js — public settings only (written by lineup-autopilot-jobs/scripts/setup.mjs). Nothing here is secret:
 // the Supabase URL and publishable key are meant for browsers; the public key only encrypts sign-ins for the GitHub job.
 window.LINEUP_CONFIG = {
-  supabaseUrl: null,
-  supabaseKey: null,
-  connectPublicKey: null,
+  supabaseUrl: "https://icshamtarhyajltwxobr.supabase.co",
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imljc2hhbXRhcmh5YWpsdHd4b2JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzMTE3MjEsImV4cCI6MjEwODg4NzcyMX0.uBV7p4RCbncyMQnIfDnXOAoKhj72PL7eq-N70DnS-94",
+  connectPublicKey: "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAlmqyJAu3IK1o2shWZK+SZKYx/fyDgGo2CJ2vF6pJMmx1ZmFrKces4DpRRDTNstN2IuYUYSzQHbdeVbhSDA++RTS6H1+QtXk3pvvS+yk0VafdR1vwERzzjLx5UdJYgjYKmet7cxlwjV97zQYOKwo3cjjW3ZzlHOMB9JlelOCh8FTBGyNean5WTMBAUUCl8ZYvLiSkcKvuVHjfNZo51X05PQIrCgxh4eQ/AWByJx/ETR8IQHRqQUXoYv6beJKCsCZjPBni5xBz5ORJyKe3o885gg2IsAxNHVT8w4GOkhS7nXBV16jN/371mD0GWYC/+LqiRfEhZCmt+ehXQ/9OYutP9leuf5ogUOobRUZ8jdRTFhFETsjArBQTCnRG/ycEPTxLQqZ3XugjALsKKccjSCLHi5yTIzih01QUKO+QYmEtFrRf6/CE6xMzgrkd+GI+d0RpgqxK9LXh1qRzCbKLliFtcQEe60mnQ0QeQnbPSs42WI1XGgLtczNvHVM8nbS8UHE/wLZbPgY0+IdJLFKQaLJ2v7C/ahQleckbDeebhZGp7+2EFXdQefPSGJdUhrs9L1a2xZLuRa9HHsL2UEjCaRtjUwXaNH599O4u4RxRq5R9gv797HjDBJ//beA9WPIky1ic8ZbhDJDZiTh6GfmhCUuycPo+BWeFYlAas9DaYnOOAVsCAwEAAQ==",
 };
