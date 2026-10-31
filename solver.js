@@ -62,12 +62,36 @@
       if (out.has(p.id) && pins[p.id] !== "start") { sat.push({ id: p.id, why: "out" }); continue; }
       if (!tryAugment(p.id, slots, match, eligOf, slots.map(() => false))) sat.push({ id: p.id, why: "no slot" });
     }
-    return { match, sat };
+    const day = { match, sat };
+    fillWithInjured(day, opts.outOrder || [...out].sort((a, b) => rankOf(players, a) - rankOf(players, b)), slots, eligOf, () => true);
+    return day;
+  }
+
+  const rankOf = (players, id) => (players.find((p) => p.id === id) || { rank: 1e9 }).rank;
+
+  /*
+   * Injured fill (Griffin 2026-10-31): a slot that would otherwise stay empty goes to an injured player whose team
+   * plays that day, in case they play. outOrder lists them best bet first (soonest expected return; long-term last).
+   * Only seats a player if nobody already in the lineup loses their spot (augmenting path), so healthy starters always
+   * come first. `room()` says whether the cap still has room (it is told each time a player is added).
+   */
+  function fillWithInjured(day, outOrder, slots, eligOf, room) {
+    day.fills = [];
+    for (const id of outOrder) {
+      if (!day.match.includes(null)) break;
+      if (!day.sat.some((x) => x.id === id && x.why === "out")) continue;
+      if (!room()) break;
+      if (tryAugment(id, slots, day.match, eligOf, slots.map(() => false))) {
+        day.sat = day.sat.filter((x) => x.id !== id);
+        day.fills.push(id);
+        room(true);
+      }
+    }
   }
 
   /*
    * planWeek: every day of a scoring period under a games cap.
-   * days: [{date, playing: Set ids, out: Set ids}], cap: games allowed for these days (Infinity for none).
+   * days: [{date, playing: Set ids, out: Set ids, outOrder?: [ids]}], cap: games allowed (Infinity for none).
    * pins: {date: {id: "start"|"bench"}}.
    * Items are (player, day) pairs taken in order: pinned starts, then rank, then date. Each item is kept if the
    * cap has room and the day's lineup can seat it without unseating anyone already kept.
@@ -108,6 +132,12 @@
       if (tryAugment(it.id, slots, st.match, eligOf, slots.map(() => false))) used++;
       else st.sat.push({ id: it.id, why: "no slot" });
     }
+    // Then empty slots go to injured players (see fillWithInjured), still within the cap.
+    days.forEach((d, i) => {
+      if (state[i].manual) return;
+      const order = d.outOrder || [...(d.out || [])].filter((id) => byId[id]).sort((a, b) => byId[a].rank - byId[b].rank);
+      fillWithInjured(state[i], order, slots, eligOf, (add) => { if (add) used++; return used < cap; });
+    });
     return { days: state, used, cap };
   }
 

@@ -134,6 +134,7 @@ td.tap { cursor: pointer; }
 .c-clash { background: var(--clash-bg); color: var(--clash); border: 1px solid var(--clash); }
 .c-cap { color: var(--cap); border: 1px dashed var(--cap); }
 .c-out { color: var(--out); font-weight: 700; }
+.c-fill { color: var(--start); border: 1.5px dashed var(--start); }
 .c-none { color: var(--line); }
 .chip.pinned::after { content: ""; position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 1px solid var(--surface); }
 tr.total td { font-weight: 600; border-bottom: 0; }
@@ -240,7 +241,8 @@ tr.total td { font-weight: 600; border-bottom: 0; }
       <div class="legend">
         <span><span class="chip c-start">PG</span> starts in that slot</span>
         <span><span class="chip c-clash">sit</span> game, no open slot</span>
-        <span><span class="chip c-cap">cap</span> over the weekly cap</span>
+        <span id="legendCap"><span class="chip c-cap">cap</span> over the weekly cap</span>
+        <span><span class="chip c-fill">C</span> injured, starting in case they play</span>
         <span><span class="chip c-out">out</span> injured</span>
         <span><span class="chip c-start pinned">F</span> your override</span>
       </div>
@@ -250,7 +252,7 @@ tr.total td { font-weight: 600; border-bottom: 0; }
 
     <section id="rank" hidden style="display:grid; gap:10px">
       <div class="controls" style="justify-content:space-between"><h2>Your priority order</h2><button class="plain" id="reset">Reset to default</button></div>
-      <p class="note">Drag the handle or use the arrows. Higher players start first and get the weekly cap first. The default order ranks this season's per-game stats across all nine categories, the same way for every team.</p>
+      <p class="note">Drag the handle or use the arrows. Higher players start first. Empty slots go to injured players, soonest expected back first, in case they play. The default order ranks this season's per-game stats across all nine categories, the same way for every team.</p>
       <ol class="rank" id="ranklist"></ol>
       <ol class="rank" id="irlist"></ol>
     </section>
@@ -265,9 +267,9 @@ tr.total td { font-weight: 600; border-bottom: 0; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=2"></script>
-<script src="solver.js?v=2"></script>
-<script src="plan.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="config.js?v=3"></script>
+<script src="solver.js?v=3"></script>
+<script src="plan.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

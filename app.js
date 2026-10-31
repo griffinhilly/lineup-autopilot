@@ -141,7 +141,7 @@ function lockedIds(date) {
 function cellFor(r, i, id) {
   const d = r.res.days[i];
   const s = d.match.indexOf(id);
-  if (s >= 0) return { cls: "c-start", txt: DATA.slots[s] };
+  if (s >= 0) return { cls: (d.fills || []).includes(id) ? "c-fill" : "c-start", txt: DATA.slots[s] };
   const sat = d.sat.find((x) => x.id === id);
   if (!sat) return null;
   if (sat.why === "out") return { cls: "c-out", txt: "out" };
@@ -165,7 +165,9 @@ function render() {
   // hero
   const opp = DATA.teams.find((t) => t.id === period.opponent[team.id]);
   $("heroTeam").textContent = team.name;
-  $("heroSub").textContent = `${team.owner} · Week ${period.number} vs ${opp ? opp.owner : "—"} · ${r.res.used} of ${period.cap} games`;
+  $("heroSub").textContent = `${team.owner} · Week ${period.number} vs ${opp ? opp.owner : "—"} · ` +
+    (period.cap == null ? `${r.res.used} starts planned` : `${r.res.used} of ${period.cap} games`);
+  $("legendCap").hidden = period.cap == null;
 
   // week: score, calls, grid
   const clashes = [], capCut = {};
@@ -175,7 +177,8 @@ function render() {
   }); });
   const capN = Object.values(capCut).reduce((a, b) => a + b, 0);
   $("score").innerHTML =
-    `<div><b>${r.res.used}<small style="font-size:15px;color:var(--muted)"> / ${period.cap}</small></b><span>games planned (cap)</span></div>` +
+    (period.cap == null ? `<div><b>${r.res.used}</b><span>starts planned</span></div>`
+      : `<div><b>${r.res.used}<small style="font-size:15px;color:var(--muted)"> / ${period.cap}</small></b><span>games planned (cap)</span></div>`) +
     `<div><b>${r.possible}</b><span>games available</span></div><div><b>${clashes.length}</b><span>slot clashes</span></div>`;
   const calls = [], byDay = {};
   for (const c of clashes) (byDay[c.i] = byDay[c.i] || []).push(c.id);
@@ -259,7 +262,7 @@ function render() {
   };
   $("starters").innerHTML = DATA.slots.map((s, k) => {
     const id = dd.match[k];
-    if (id) return row(s, map[id], pins[id] === "start" ? "your call: start" : "", { s: k });
+    if (id) return row(s, map[id], pins[id] === "start" ? "your call: start" : (dd.fills || []).includes(id) ? "starting in case they play" : "", { s: k });
     const cls = sel ? (samePos(sel, { s: k }) ? " sel" : dest({ s: k }) ? " dest" : " dim") : "";
     return `<div class="prow emptyslot${cls}" tabindex="0" data-s="${k}" aria-label="Empty ${s} slot"><span class="pill${pillCls(s)}">${dest({ s: k }) ? "HERE" : s}</span><span class="av"></span><span class="pname"><b>Empty</b></span><span></span></div>`;
   }).join("");
